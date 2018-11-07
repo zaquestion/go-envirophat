@@ -1,4 +1,4 @@
-// light is a direct port of https://github.com/pimoroni/enviro-phat/blob/master/library/envirophat/tcs3472.py
+// light is a port of https://github.com/pimoroni/enviro-phat/blob/master/library/envirophat/tcs3472.py
 package light
 
 import (
@@ -112,10 +112,14 @@ func SetIntegrationTimeMS(ms float64) error {
 	return nil
 }
 
+// MaxCount returns the maximum value which can be counted by a channel with
+// the chosen integration time
 func MaxCount() int {
 	return maxCount
 }
 
+// Valid reads the status on the light sensor and returns true if the device
+// checks out
 func Valid() bool {
 	if err := checkI2C(); err != nil {
 		return false
@@ -127,6 +131,10 @@ func Valid() bool {
 	return status&1 > 0
 }
 
+// Read gets the raw lux and rgb values from the sensors and returns a fully
+// populated Reading which houses the data in a variety of formats. This is the
+// biggest difference from the python library and was done so that all formats
+// with minimal reads from the sensor.
 func Read() (Reading, error) {
 	if err := checkI2C(); err != nil {
 		return Reading{}, err
