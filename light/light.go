@@ -6,6 +6,8 @@ import (
 
 	"github.com/d2r2/go-i2c"
 	"github.com/pkg/errors"
+
+	"github.com/zaquestion/go-envirophat"
 )
 
 const (
@@ -20,7 +22,7 @@ var (
 // InitI2C creates a new i2c client and connects to the light sensor. The
 // client is then used internally by the package. The caller is responible for
 // closing the connection.
-func InitI2C() (*i2c.I2C, error) {
+func InitI2C() (envirophat.Closer, error) {
 	//logger.ChangePackageLogLevel("i2c", logger.PanicLevel)
 
 	var err error

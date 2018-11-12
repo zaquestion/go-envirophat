@@ -1,3 +1,5 @@
+github.com/d2r2/go-bsbmp v0.0.0-20181107163700-2fed718d7a5b h1:LMGqj50rsVlzS42c4eNZDj7hgcM/hmVXilj8xdesQp0=
+github.com/d2r2/go-bsbmp v0.0.0-20181107163700-2fed718d7a5b/go.mod h1:3iz1WHlYJU9b4NJei+Q8G7DN3K05arcCMlOQ+qNCDjo=
 github.com/d2r2/go-i2c v0.0.0-20181106120903-cd1f5f040ed6 h1:CKKVUDihH382VI9E9p/7Y46/Z5iXgOI7+qZ6tZea4ZM=
 github.com/d2r2/go-i2c v0.0.0-20181106120903-cd1f5f040ed6/go.mod h1:AwxDPnsgIpy47jbGXZHA9Rv7pDkOJvQbezPuK1Y+nNk=
 github.com/d2r2/go-logger v0.0.0-20181002101108-49d264032daf h1:w86yqNbKRq01cCM+87jWC1/z3E/Nts5x0FcETRAAGgc=
@@ -6,7 +8,19 @@ github.com/d2r2/go-shell v0.0.0-20181002100851-c94f62cb3f85 h1:J6zsXuxVaMnX0CXjl
 github.com/d2r2/go-shell v0.0.0-20181002100851-c94f62cb3f85/go.mod h1:FdrNob+jQ3UkEpNVeZFVn8mW86Aa2wa6U5z0vGQOEXQ=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
+github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnGC8aR0=
+github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
+github.com/motemen/go-quickfix v0.0.0-20160413151302-5c522febc679 h1:UkBp8kp/ChZOCNV1nyiKpfufVkTdYU32saV0Y6iQgKk=
+github.com/motemen/go-quickfix v0.0.0-20160413151302-5c522febc679/go.mod h1:MIkbIO1YK5LNJNfBzYUstnQr/eQTEFKzlBuRsOkknUI=
+github.com/motemen/gore v0.3.0 h1:LcpH6Os6PUPAcWNTIcwEXrlVJ4/4sTGYWAExk9lsAmg=
+github.com/motemen/gore v0.3.0/go.mod h1:jOHUyog5qCVzAXc0jmrpuQWUvAgd+HfcP88CKW5kqFw=
+github.com/peterh/liner v1.1.0 h1:f+aAedNJA6uk7+6rXsYBnhdo4Xux7ESLe+kcuVUF5os=
+github.com/peterh/liner v1.1.0/go.mod h1:CRroGNssyjTd/qIG2FyxByd2S8JEAZXBl4qUrZf8GS0=
 github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/stianeikeland/go-rpio v3.0.0+incompatible h1:AWDcfdnPPZ7Jikis6HNj0EgujMfB4t7oi4nZd5cIqko=
 github.com/stianeikeland/go-rpio v3.0.0+incompatible/go.mod h1:Sh81rdJwD96E2wja2Gd7rrKM+XZ9LrwvN2w4IXrqLR8=
+golang.org/x/tools v0.0.0-20181107225058-a28dfb48e06b h1:r3OgSCBAsWlqM826Ncqr14c4bAHcby43dhAHYrr6F5s=
+golang.org/x/tools v0.0.0-20181107225058-a28dfb48e06b/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=

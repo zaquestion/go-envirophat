@@ -3,7 +3,7 @@ go-envirophat
 
 `go-envirophat` is a port of the python library [enviro-phat](https://github.com/pimoroni/enviro-phat) with some design liberties taken. It allows you to interact with the [Enviro pHAT](https://shop.pimoroni.com/products/enviro-phat) on the Rasberry Pi.
 
-leds
+### Leds
 ```
 import "github.com/zaquestion/go-envirophat/leds"
 ```
@@ -11,7 +11,7 @@ import "github.com/zaquestion/go-envirophat/leds"
 leds.On()
 ```
 
-light
+### Light
 ```
 import "github.com/zaquestion/go-envirophat/light"
 ```
@@ -48,6 +48,35 @@ yields
 }
 ```
 
-TODO:
+### Weather
+```
+	i2c, err := weather.InitI2C()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer i2c.Close()
+
+	// Read temperature in celsius degree
+	t, err := weather.Temperature()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Temperature = %v*C\n", t)
+	// Read atmospheric pressure in pascal
+	p, err := weather.Pressure()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Pressure = %v Pa\n", p)
+	// Read atmospheric altitude in meters above sea level, if we assume
+	// that pressure at see level is equal to 101325 Pa.
+	a, err := weather.Altitude()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Altitude = %v m\n", a)
+```
+
+### TODO:
  - Remaining sensors
  - Support raspberry pi 1?

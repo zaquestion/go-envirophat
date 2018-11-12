@@ -1,0 +1,245 @@
+package weather
+
+import (
+	"fmt"
+	"math"
+	"time"
+
+	"github.com/d2r2/go-bsbmp"
+	"github.com/d2r2/go-i2c"
+	"github.com/pkg/errors"
+
+	"github.com/d2r2/go-bsbmp"
+	"github.com/zaquestion/go-envirophat"
+)
+
+const (
+	addr = 0x77
+)
+
+var (
+	sensor *bsbmp.Sensor
+)
+
+// InitI2C creates a new i2c client and connects to the weather sensor. The
+// client is then used internally by the package. The caller is responible for
+// closing the connection.
+func InitI2C() (envirophat.Closer, error) {
+	logger.ChangePackageLogLevel("i2c", logger.PanicLevel)
+	logger.ChangePackageLogLevel("bsbmp", logger.PanicLevel)
+
+	// TODO: figure out how to detect raspberry pi version to properly select the bus
+	// Ref: https://github.com/pimoroni/enviro-phat/blob/master/library/envirophat/i2c_bus.py#L19
+	i2c, err := i2c.NewI2C(addr, 1)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect to i2c bus")
+	}
+
+	sensor, err = bsbmp.NewBMP(bsbmp.BMP280, i2c)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create bmp280 sensor")
+	}
+
+	return i2c, nil
+}
+
+type PowerMode = uint8
+
+const (
+	PowerSleep PowerMode = iota
+	PowerForced1
+	PowerForced2
+	PowerNormal
+)
+
+type TempBits = uint8
+
+const (
+	TempBitsSkipped   TempBits = iota << 5
+	TempBitsUltraLow           // 16 bit
+	TempBitsLow                // 17 bit
+	TempBitsStandard           // 18 bit
+	TempBitsHigh               // 19 bit
+	TempBitsUltraHigh          // 20 bit
+)
+
+type PressureBits = uint8
+
+const (
+	PressureBitsSkipped   PressureBits = iota << 2
+	PressureBitsUltraLow               // 16 bit
+	PressureBitsLow                    // 17 bit
+	PressureBitsStandard               // 18 bit
+	PressureBitsHigh                   // 19 bit
+	PressureBitsUltraHigh              // 20 bit
+)
+
+// Filter meaning is undefined
+// Ref: https://github.com/pimoroni/enviro-phat/blob/master/library/envirophat/bmp280.py#L40
+type Filter = uint8
+
+const (
+	Filter0 Filter = iota << 2
+	Filter1
+	Filter2
+	Filter3
+	Filter4
+	Filter5
+	Filter6
+	Filter7
+)
+
+type Standby = uint8
+
+const (
+	Standby0 Standby = iota << 5 // 000 0,5ms
+	Standby1                     // 001 62.5 ms
+	Standby2                     // 010 125 ms
+	Standby3                     // 011 250ms
+	Standby4                     // 100 500ms
+	Standby5                     // 101 1000ms
+	Standby6                     // 110 2000ms
+	Standby7                     // 111 4000ms
+)
+
+type Registry = uint8
+
+const (
+	RegDigT1 Registry = 0x88
+	RegDigT2 Registry = 0x8A
+	RegDigT3 Registry = 0x8C
+
+	RegDigP1 Registry = 0x8E
+	RegDigP2 Registry = 0x90
+	RegDigP3 Registry = 0x92
+	RegDigP4 Registry = 0x94
+	RegDigP5 Registry = 0x96
+	RegDigP6 Registry = 0x98
+	RegDigP7 Registry = 0x9A
+	RegDigP8 Registry = 0x9C
+	RegDigP9 Registry = 0x9E
+
+	RegChipID    Registry = 0xD0
+	RegVersion   Registry = 0xD1
+	RegSoftReset Registry = 0xE0
+	RegControl   Registry = 0xF4
+	RegConfig    Registry = 0xF5
+	RegStatus    Registry = 0xF3
+
+	RegTemperatureMSB  Registry = 0xFA
+	RegTemperatureLSB  Registry = 0xFB
+	RegTemperatureXLSB Registry = 0xFC
+
+	RegPressureMSB  Registry = 0xF7
+	RegPressureLSB  Registry = 0xF8
+	RegPressureXLSB Registry = 0xF9
+)
+
+// Magic settings copied from original source
+// Ref: https://github.com/pimoroni/enviro-phat/blob/master/library/envirophat/bmp280.py#L61-L62
+const (
+	config   = Standby4 + Filter4
+	ctrlMeas = TempBitsUltraHigh + PressureBitsUltraHigh + PowerNormal
+
+	// QNH  is used to calculate the correct height above sealevel its also
+	// included in airport weather information ATIS named as QNH The
+	// default is equivilent to the air pressure at mean sea level in the
+	// International Standard Atmosphere (ISA).
+	// Ref: https://en.wikipedia.org/wiki/Pressure_altitude
+	QNH = 1013.25
+)
+
+type Reading struct {
+	Temperature float64
+	Pressure    float64
+	Altitude    float64
+
+	RawPressure    float64
+	RawTemperature float64
+}
+
+// Temperature is returned in Celcius and may be affected by
+// nearby sources of heat, including the Pi itself.
+func Temperature() (float64, error) {
+	t, err := sensor.ReadTemperatureC(bsbmp.ACCURACY_STANDARD)
+	if err != nil {
+		return 0, err
+	}
+	return t, nil
+}
+
+// Read gets the raw temperature and pressure values from the sensors and
+// returns a populated Reading with calculated temperature, pressure, and
+// altitude values. This is the biggest difference from the python library and
+// was done so that all formats with minimal reads from the sensor.
+//
+// Temperature is returned in Celcius and may be affected by
+// nearby sources of heat, including the Pi itself.
+// Pressure is returned in Pa units
+//
+// QNH is your local value for atmospheric pressure adjusted to sea level. Use
+// weather.QNH for the mean sea level
+func Read(qnh float64) (Reading, error) {
+	rawTempMSB, err := i2cClient.ReadRegU8(RegTemperatureMSB)
+	if err != nil {
+		return Reading{}, err
+	}
+	rawTempLSB, err := i2cClient.ReadRegU8(RegTemperatureLSB)
+	if err != nil {
+		return Reading{}, err
+	}
+	rawTempXLSB, err := i2cClient.ReadRegU8(RegTemperatureXLSB)
+	if err != nil {
+		return Reading{}, err
+	}
+
+	rawPressMSB, err := i2cClient.ReadRegU8(RegPressureMSB)
+	if err != nil {
+		return Reading{}, err
+	}
+	rawPressLSB, err := i2cClient.ReadRegU8(RegPressureLSB)
+	if err != nil {
+		return Reading{}, err
+	}
+	rawPressXLSB, err := i2cClient.ReadRegU8(RegPressureXLSB)
+	if err != nil {
+		return Reading{}, err
+	}
+
+	// All this magic is directly pulled from the python implementation
+	// Ref: https://github.com/pimoroni/enviro-phat/blob/master/library/envirophat/bmp280.py#L202-L220
+
+	rawTemp := float64((uint32(rawTempMSB) << 12) + (uint32(rawTempLSB) << 4) + (uint32(rawTempXLSB) >> 4))
+	rawPress := float64((uint32(rawPressMSB) << 12) + (uint32(rawPressLSB) << 4) + (uint32(rawPressXLSB) >> 4))
+
+	// (╯°□°）╯︵ ┻━┻
+	v1 := (rawTemp/16384.0 - float64(digT1)/1024.0) * float64(digT2)
+	v2 := math.Pow(rawTemp/131072.0-float64(digT1)/8192.0, 2) * float64(digT3)
+
+	tFine := v1 + v2
+	t := tFine / 5120.0
+
+	// ┻━┻︵ \(°□°)/ ︵ ┻━┻
+	v1 = tFine/2.0 - 64000.0
+	v2 = v1 * v1 * float64(digP6) / 32768.0
+	v2 = v2 + v1*float64(digP5)*2
+	v2 = v2/4.0 + float64(digP4)*65536.0
+	v1 = (float64(digP3)*v1*v1/524288.0 + float64(digP2)*v1) / 524288.0
+	v1 = (1.0 + v1/32768.0) * float64(digP1)
+	p := 1048576.0 - rawPress
+	p = (p - v2/4096.0) * 6250.0 / v1
+	v1 = float64(digP9) * p * p / 2147483648.0
+	v2 = p * float64(digP8) / float64(32768.0)
+	p = p + (v1+v2+float64(digP7))/16.0
+
+	a := 44330.0 * (1.0 - math.Pow(p/(qnh*100), 1.0/5.255))
+
+	return Reading{
+		Temperature: t,
+		Pressure:    p,
+		Altitude:    a,
+
+		RawTemperature: rawTemp,
+		RawPressure:    rawPress,
+	}, nil
+}
